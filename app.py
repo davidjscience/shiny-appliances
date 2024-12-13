@@ -81,6 +81,9 @@ def server(input, output, session):
         if len(l) == 0:
             l = list(df["inside"]["temperature"].columns)
 
+        if len(sensors) == 0:
+            sensors = ["temperature","humidity"]
+
         dmx = date_min_max()
 
         fig = plt.figure()
