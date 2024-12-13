@@ -2,6 +2,7 @@
 
 from shiny import App, render, ui, reactive
 from datetime import timedelta
+import pandas as pd
 
 path = 'data/ex6df.pkl'
 
@@ -16,8 +17,9 @@ rooms = list(df["inside"]["temperature"].columns)
 date_min = df.index[0]
 date_max = df.index[-1]
 
-print(date_max-date_min)
-print()
+y = pd.read_csv("data/y.csv")
+y.index = df.index
+y = y.drop("date",axis=1)
 
 
 app_ui = ui.page_sidebar( 
@@ -29,6 +31,7 @@ app_ui = ui.page_sidebar(
             "sensor", "Sensors (multi)", choices=["temperature","humidity"],
             multiple=True            
         ),
+        ui.input_switch("energy", "Show energy consumption", False),  
         ui.input_select(  
         "select",  
         "Rooms (multi)", 
@@ -40,7 +43,7 @@ app_ui = ui.page_sidebar(
         multiple=True, 
         size=len(rooms)
     )
-    ,width=400
+    ,width=320
     ),
     ui.output_plot("hist", width = "100%", height= "100%")
     ,window_title="Appliances Energy Prediction Dashoard"
@@ -84,27 +87,35 @@ def server(input, output, session):
 
         dmx = date_min_max()
 
+
+        nrgy = input.energy()
+
         fig = plt.figure()
 
-        if len(sensors) == 1:
+        if len(sensors) == 1 and not nrgy:
             axes = [fig.subplots(1,1)]
         elif len(sensors) == 0:
             return fig
         else:
-            axes = fig.subplots(1,len(sensors))
+            axes = fig.subplots(1,len(sensors)+int(nrgy))
+
 
         
         if((dmx[1]-dmx[0]).days<1):
             dmx[1] = dmx[0] + timedelta(days=1)
 
-
+        
 
         for i,s in enumerate(sensors):
 
             e_result = df["inside"][s][l][dmx[0]:dmx[1]].resample(sample()).mean()
-            e_result.plot(title=sensors[i],ax=axes[i]).legend(loc='upper left')
-        return fig
+            e_result.plot(title=sensors[i],ax=axes[i]).legend(loc='best')
 
+        if nrgy:
+            e_result = y[dmx[0]:dmx[1]].resample(sample()).mean()
+            e_result.plot(title="energy",ax=axes[-1],legend=False)
+
+        return fig
 
 
 
