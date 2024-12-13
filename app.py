@@ -44,7 +44,7 @@ app_ui = ui.page_sidebar(
     ),
     ui.output_plot("hist", width = "100%", height= "100%")
     ,window_title="Appliances Energy Prediction Dashoard"
-    ,title="Appliances Energy Prediction Dashoard"
+    ,title="Appliances Energy Dashoard"
 )
 
 
