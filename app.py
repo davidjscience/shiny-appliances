@@ -31,21 +31,32 @@ app_ui = ui.page_sidebar(
             "sensor", "Sensors (multi)", choices=["temperature","humidity"],
             multiple=True            
         ),
-        ui.input_switch("energy", "Show energy consumption", False),  
         ui.input_select(  
         "select",  
         "Rooms (multi)", 
         choices = rooms,
-       # { "bathroom": "bathroom",
-       #   "ironing room": "ironing room",
-       #   "kitchen": "kitchen",
-       #   "laundry room": "laundry room" },
         multiple=True, 
         size=len(rooms)
     )
-    ,width=320
+    ,ui.input_switch("energy", "Show power consumption chart", False) 
+    ,ui.input_switch("legend", "Hide legend", False) 
+    ,width=350
     ),
-    ui.output_plot("hist", width = "100%", height= "100%")
+    ui.layout_columns(
+        ui.value_box(
+            "Average temperature", ui.output_ui("average_temp"),
+        ),
+        ui.value_box(
+            "Average humidity", ui.output_ui("average_hum"), 
+        ),
+        ui.value_box(
+            "Total power consumption", ui.output_ui("total_energy"),
+        ),
+        fill=False,
+    ),
+    ui.layout_columns(
+        ui.output_plot("lines", width = "100%", height= "100%")
+    )
     ,window_title="Appliances Energy Prediction Dashoard"
     ,title="Appliances Energy Dashoard"
 )
@@ -73,19 +84,61 @@ def server(input, output, session):
             return "d"
         else: 
             return "W"
+        
+
+    @reactive.calc
+    def rooms():
+        r = list(input.select())
+        if len(r) == 0:
+            r = list(df["inside"]["temperature"].columns)  
+        return r
+    
+
+    @render.ui
+    def average_temp():
+        r = rooms()
+        dmx = date_min_max()
+         
+        return "{:.1f}°C".format(df["inside"]["temperature"][r][dmx[0]:dmx[1]].mean().mean())
+    
+    @render.ui
+    def average_hum():
+        r = rooms()
+        dmx = date_min_max()
+         
+        return "{:.1f} g/m³".format(df["inside"]["humidity"][r][dmx[0]:dmx[1]].mean().mean())
+    
+
+    @render.ui
+    def total_energy():
+        r = rooms()
+        dmx = date_min_max()
+        return "{:.1f} kWh".format((y[dmx[0]:dmx[1]].sum()/1000).iloc[0])
+    
+
+    @render.ui
+    def average_hum():
+        r = rooms()
+        dmx = date_min_max()
+         
+        return "{:.1f} g/m³".format(df["inside"]["humidity"][r][dmx[0]:dmx[1]].mean().mean())
+
 
 
     @render.plot
-    def hist():
-        l= list(input.select())
-        sensors = list(input.sensor())
-        if len(l) == 0:
-            l = list(df["inside"]["temperature"].columns)
+    def lines():
+
+        r = rooms()
+
+        dmx = date_min_max()
+
+
+        sensors = input.sensor()
 
         if len(sensors) == 0:
             sensors = ["temperature","humidity"]
 
-        dmx = date_min_max()
+    
 
 
         nrgy = input.energy()
@@ -108,12 +161,14 @@ def server(input, output, session):
 
         for i,s in enumerate(sensors):
 
-            e_result = df["inside"][s][l][dmx[0]:dmx[1]].resample(sample()).mean()
-            e_result.plot(title=sensors[i],ax=axes[i]).legend(loc='best')
+            l = not input.legend() and i == 0
+
+            e_result = df["inside"][s][r][dmx[0]:dmx[1]].resample(sample()).mean()
+            e_result.plot(title=sensors[i],ax=axes[i],legend=l)
 
         if nrgy:
             e_result = y[dmx[0]:dmx[1]].resample(sample()).mean()
-            e_result.plot(title="energy",ax=axes[-1],legend=False)
+            e_result.plot(title="power consumption",ax=axes[-1],legend=l)
 
         return fig
 
