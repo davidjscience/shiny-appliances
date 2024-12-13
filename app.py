@@ -28,7 +28,7 @@ app_ui = ui.page_sidebar(
         ui.input_select(
             "sensor", "Sensors (multi)", choices=["temperature","humidity"],
             multiple=True,
-            selected="temperature"
+            selected=["temperature","humidity"]
             
         ),
         ui.input_select(  
@@ -39,7 +39,8 @@ app_ui = ui.page_sidebar(
        #   "ironing room": "ironing room",
        #   "kitchen": "kitchen",
        #   "laundry room": "laundry room" },
-        multiple=True,  
+        multiple=True, 
+        size=len(rooms)
     )
     ,width=400
     ),
