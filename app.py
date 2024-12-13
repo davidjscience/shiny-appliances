@@ -168,7 +168,7 @@ def server(input, output, session):
 
         if nrgy:
             e_result = y[dmx[0]:dmx[1]].resample(sample()).mean()
-            e_result.plot(title="power consumption",ax=axes[-1],legend=l)
+            e_result.plot(title="power consumption",ax=axes[-1],legend=False)
 
         return fig
 
