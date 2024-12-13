@@ -27,9 +27,7 @@ app_ui = ui.page_sidebar(
                         ,end=date_max),
         ui.input_select(
             "sensor", "Sensors (multi)", choices=["temperature","humidity"],
-            multiple=True,
-            selected=["temperature","humidity"]
-            
+            multiple=True            
         ),
         ui.input_select(  
         "select",  
